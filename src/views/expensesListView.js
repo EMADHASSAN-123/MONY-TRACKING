@@ -2,7 +2,7 @@ import { formatCurrency, formatDate } from "../utils/helpers.js";
 import { EX_CATEGORIES, isStaffRole, TRANSACTION_DETAIL_PREFIX } from "../utils/constants.js";
 
 function emojiFor(cat) {
-  return EX_CATEGORIES.find((c) => c.id === cat)?.emoji ?? "✨";
+  return EX_CATEGORIES.find((c) => c.id === cat)?.label ?? "✨";
 }
 
 /**
@@ -52,7 +52,7 @@ export function mountExpensesList(root, api) {
       thOwner.classList.toggle("table-cell", staff);
     }
     const rows = st.expenses;
-    countEl.textContent = `${rows.length} سجل — Realtime`;
+    countEl.textContent = `${rows.length} عددالمصروفات  `;
     if (mobileRows) {
       mobileRows.innerHTML = rows
         .map((t) => {
@@ -81,7 +81,7 @@ export function mountExpensesList(root, api) {
             </div>
 
             <div class="mt-3 flex items-center justify-end">
-              <button type="button" data-del="${t.id}" class="rounded-lg px-2 py-1 text-xs text-rose-300 hover:bg-rose-500/10">
+              <button type="button" data-del="${t.id}" class="rounded-lg px-2 py-1 text-xs text-rose-300 hover:bg-rose-500/10 ">
                 حذف
               </button>
             </div>

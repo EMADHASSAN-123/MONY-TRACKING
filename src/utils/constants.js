@@ -95,17 +95,17 @@ export const ROUTE_LABELS = {
 };
 
 export const TX_CATEGORIES = [
-  { id: "family", label: "عائلي", emoji: "👨‍👩‍👧" },
-  { id: "business", label: "عمل", emoji: "💼" },
-  { id: "urgent", label: "عاجل", emoji: "⚡" },
-  { id: "general", label: "عام", emoji: "✨" },
+  { id: "family", label: "عائلي", emoji: "" },
+  { id: "business", label: "عمل", emoji: "" },
+  { id: "urgent", label: "رواتب", emoji: "" },
+  { id: "general", label: "عام", emoji: "" },
 ];
 
 export const EX_CATEGORIES = [
-  { id: "food", label: "طعام", emoji: "🍽️" },
-  { id: "transport", label: "مواصلات", emoji: "🚗" },
-  { id: "bills", label: "فواتير", emoji: "📄" },
-  { id: "general", label: "عام", emoji: "✨" },
+  { id: "food", label: "طعام", emoji: "" },
+  { id: "transport", label: "مواصلات", emoji: "" },
+  { id: "bills", label: "فواتير", emoji: "" },
+  { id: "general", label: "عام", emoji: "" },
 ];
 
 /** Widgets in the draggable grid (quick + pulse stay fixed above). */

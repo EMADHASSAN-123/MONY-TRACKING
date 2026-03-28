@@ -9,8 +9,8 @@ export function mountAdminUsers(root, api) {
     <div class="space-y-8">
       <header>
         <p class="text-xs uppercase tracking-widest text-amber-400/80">إدارة</p>
-        <h1 class="text-3xl font-bold text-white">⛭ المستخدمون والأدوار</h1>
-        <p class="mt-2 text-sm text-white/45">المدير والمسؤول يريان القائمة؛ إضافة مستخدم وتعديل الأدوار للمسؤول فقط (يتطلب Edge Function: admin-users)</p>
+        <h1 class="text-3xl font-bold text-white">⛭ ادارة المستخدمون </h1>
+        <p class="mt-2 text-sm text-white/45">يمكنك معرفة جميع المستخدمين وتعيين الادوار بحسب احتياجك لكل مستخدم</p>
       </header>
       <div data-admin-form class="hidden rounded-2xl border border-amber-500/20 bg-amber-500/5 p-6"></div>
       <div data-admin-cards class="md:hidden space-y-3"></div>

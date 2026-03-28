@@ -54,7 +54,7 @@ export function mountTransactionsList(root, api) {
       thOwner.classList.toggle("table-cell", staff);
     }
     const rows = st.transactions;
-    countEl.textContent = `${rows.length} سجل — يتحدث مباشرة مع Realtime`;
+    countEl.textContent = `${rows.length} عدد الحوالات  `;
     if (mobileRows) {
       mobileRows.innerHTML = rows
         .map((t) => {

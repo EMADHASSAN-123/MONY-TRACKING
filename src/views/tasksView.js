@@ -62,7 +62,7 @@ export function mountTasks(root, api) {
           <p class="text-xs uppercase tracking-widest text-cyan-400/80">تنظيم العمل</p>
           <h1 class="text-3xl font-bold text-white">✦ المهام</h1>
           <p class="mt-2 max-w-xl text-sm text-white/45">
-            يُنشئ المسؤول والمدير المهام ويعيّنانها؛ يتلقى المكلف إشعارًا بالبريد عند التعيين أو تغيير الحالة (يتطلب إعداد Resend في Edge). يمكنك تتبع السجل أسفل كل مهمة.
+           يمكنك انشاء مهام وتخصيصة الى احد المستخدمين ليقوم بتنفيذها وامكانية تتبع تنفيذ المعهمة مباشرة
           </p>
         </div>
         <div class="flex flex-wrap gap-2">

@@ -245,8 +245,8 @@ export function mountDashboard(root, api) {
       <header class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p class="text-xs font-medium uppercase tracking-[0.25em] text-cyan-400/80">الادارة المالية</p>
-          <h1 class="mt-1 text-3xl font-black text-white sm:text-4xl">لوحة تحكم مالية حية</h1>
-          <p class="mt-2 max-w-xl text-sm text-white/50">Spiral · Timeline · Realtime — اسحب البطاقات لإعادة الترتيب</p>
+          <h1 class="mt-1 text-3xl font-black text-white sm:text-4xl">لوحة تحكم مالية </h1>
+          <p class="mt-2 max-w-xl text-sm text-white/50">بيانات مختصرة لجميع اقسام الموقع</p>
         </div>
         <div class="flex flex-wrap gap-2">
           <button type="button" data-go="${ROUTES.ADD_TRANSACTION}" class="rounded-xl bg-cyan-500/20 px-4 py-2 text-sm font-semibold text-cyan-100 ring-1 ring-cyan-400/30 hover:bg-cyan-500/30">+ حوالة</button>

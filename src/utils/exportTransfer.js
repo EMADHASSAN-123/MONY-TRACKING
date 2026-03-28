@@ -75,12 +75,12 @@ export function openTransferPrintPdf(tx, expenses) {
   const cssVars = [
     "--mony-text-rgb",
     "--mony-panel-rgb",
-    "--mony-bg-rgb",
     "--mony-cyan-rgb",
     "--mony-violet-rgb",
     "--mony-emerald-rgb",
     "--mony-rose-rgb",
   ]
+  // "--mony-bg-rgb",
     .map((k) => `${k}:${cs.getPropertyValue(k).trim()}`)
     .join(";");
 
@@ -93,7 +93,7 @@ export function openTransferPrintPdf(tx, expenses) {
     :root{${cssVars}}
     body { font-family: 'Tajawal', 'Segoe UI', sans-serif; padding: 24px; }
     h1 { font-size: 18px; margin-bottom: 8px; }
-    body { color: rgb(var(--mony-text-rgb)); }
+    body { color: black; }
     .muted { color: rgba(var(--mony-text-rgb), 0.78); font-size: 12px; margin-bottom: 20px; }
     html, body { background: rgb(var(--mony-bg-rgb)); }
     * { -webkit-print-color-adjust: exact; color-adjust: exact; }
@@ -112,7 +112,7 @@ export function openTransferPrintPdf(tx, expenses) {
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
-  <h1>تقرير حوالة — الادارة المالية لمركز الشفاء القرأني</h1>
+  <h1>تقرير حوالة — الادارة الرقمية المالية لمركز الشفاء القرأني</h1>
   <p class="muted">صُدر في ${new Date().toLocaleString("ar-SA")}</p>
   <div class="kv">
     <div><span>المرسل</span><span>${escapeHtml(tx.sender)}</span></div>
@@ -121,7 +121,7 @@ export function openTransferPrintPdf(tx, expenses) {
     <div><span>تاريخ الحوالة</span><span>${formatDate(tx.transaction_date)}</span></div>
     <div><span>التصنيف</span><span>${escapeHtml(tx.category ?? "")}</span></div>
   </div>
-  <h2 style="font-size:15px;margin-top:24px">المصروفات المرتبطة (${expenses.length})</h2>
+  <h2 style="font-size:15px;margin-top:24px">سحبيات/مصروفات الحوالة   (${expenses.length})</h2>
   <table>
     <thead><tr><th>الوصف</th><th>المبلغ</th><th>التاريخ</th><th>التصنيف</th></tr></thead>
     <tbody>${exRows || "<tr><td colspan='4' style='text-align:center'>لا مصروفات</td></tr>"}</tbody>
