@@ -216,7 +216,6 @@ function pulseBlock(st, report) {
           <p class="mt-1 text-3xl font-black text-white">${formatCurrency((s?.totalTransferVolume ?? 0) + (s?.totalExpenses ?? 0), report?.currencies?.[0] ?? "SAR")}</p>
           <p class="text-sm text-white/45">مجموع الحركة المالية في الفترة</p>
         </div>
-        <div class="flex gap-2 text-2xl opacity-80">📈 💹 ✨</div>
       </div>
     </div>
   `;
@@ -271,7 +270,7 @@ export function mountDashboard(root, api) {
 
     const blocks = {
       spiral: widgetShell("spiral", "Radial / Spiral", spiralHTML(st)),
-      timeline: widgetShell("timeline", "Timeline flow", timelineHTML(st)),
+      timeline: widgetShell("timeline", "التدفق المالي", timelineHTML(st)),
     };
     elWidgets.innerHTML = order
       .filter((id) => blocks[id])

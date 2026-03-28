@@ -88,7 +88,7 @@ export function openTransferPrintPdf(tx, expenses) {
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8"/>
-  <title>حوالة ${escapeHtml(tx.id.slice(0, 8))}</title>
+  <title>حوالة ${escapeHtml(tx.sender.slice(0, 12))}</title>
   <style>
     :root{${cssVars}}
     body { font-family: 'Tajawal', 'Segoe UI', sans-serif; padding: 24px; }
@@ -123,7 +123,7 @@ export function openTransferPrintPdf(tx, expenses) {
   </div>
   <h2 style="font-size:15px;margin-top:24px">سحبيات/مصروفات الحوالة   (${expenses.length})</h2>
   <table>
-    <thead><tr><th>الوصف</th><th>المبلغ</th><th>التاريخ</th><th>التصنيف</th></tr></thead>
+    <thead style="color:#f4fbf4"><tr><th>الوصف</th><th>المبلغ</th><th>التاريخ</th><th>التصنيف</th></tr></thead>
     <tbody>${exRows || "<tr><td colspan='4' style='text-align:center'>لا مصروفات</td></tr>"}</tbody>
   </table>
   <div class="summary">
