@@ -1,0 +1,128 @@
+/* Tailwind handles utilities; this file provides theme tokens + motion polish */
+
+:root { 
+  /* Core palette as RGB (comma separated) so we can reuse in rgba() */
+  --mony-cyan-rgb: 34, 211, 238;/* أزرق سماو400 
+  يستخدم في:
+الأزرار
+الإضاءات
+العناصر التفاعلية*/
+  --mony-violet-rgb: 167, 139, 250;/* لون بنفسجي
+  */
+  --mony-emerald-rgb: 52, 211, 153;/* ون أخضر (غالبًا يستخدم لـ):
+الأرباح
+النجاح
+الحالات الإيجابية*/
+
+  --mony-rose-rgb: 244, 63, 94;/* أزرق سماولون أحمر وردي:
+الخسائر
+التحذيرات
+*/
+  --mony-fuchsia-rgb: 217, 70, 239;/* لون بنفسجي مائل للوردي*/
+  /* Backdrop (for drawers/modals) should stay "dark-ish" in all themes */
+  --mony-backdrop-rgb: 0, 0, 0;/* هذا اللون يستخدم لـ:
+
+المودالات (Modal)
+القوائم الجانبية
+الخلفية عند فتح نافذة*/
+
+  /* Dark theme defaults */
+  --mony-text-rgb: 255, 255, 255;/*النص = أبيض
+  ;   /* نص أبيض */
+
+  --mony-bg-rgb: 7, 7, 10; /* #07070aخلفية الصفحة
+  لون:
+أسود مال للأزرق
+داكن جدًا */
+  --mony-panel-rgb: 24, 24, 27; /* zinc-900-ish
+  لون:الكروت
+رمادي غامق 
+يستخدم في:
+الكروت
+البطاقات
+الصناديق*/
+  --mony-surface-rgb: 7, 7, 10; /*نفس لون الخلفية تقريبًا
+👉 يستخدم ف
+input
+textarea
+عناصر الإدخال backgrounds for inputs */
+}
+
+body.theme-light {
+  --mony-text-rgb: 10, 10, 14;
+  --mony-bg-rgb: 250, 250, 251;
+  --mony-panel-rgb: 245, 245, 247;
+  --mony-surface-rgb: 255, 255, 255;
+}
+
+/* App background uses tokens so it updates automatically with the theme */
+.mony-app-bg {
+  background-color: rgb(var(--mony-bg-rgb));
+  background-image:
+    radial-gradient(
+      ellipse 120% 80% at 50% -20%,
+      rgba(var(--mony-cyan-rgb), 0.12),
+      transparent 50%
+    ),
+    radial-gradient(
+      ellipse 80% 50% at 100% 50%,
+      rgba(var(--mony-violet-rgb), 0.08),
+      transparent
+    );
+}
+
+@keyframes mony-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(var(--mony-cyan-rgb), 0.35);
+  }
+  70% {
+    box-shadow: 0 0 0 14px rgba(var(--mony-cyan-rgb), 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(var(--mony-cyan-rgb), 0);
+  }
+}
+
+.mony-pulse {
+  animation: mony-pulse 0.9s ease-out 1;
+}
+
+@keyframes fadeSlide {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-fadeSlide {
+  animation: fadeSlide 0.45s ease forwards;
+  opacity: 0;
+}
+
+/* Scrollbar (WebKit) */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(var(--mony-text-rgb), 0.04);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(var(--mony-cyan-rgb), 0.25);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(var(--mony-cyan-rgb), 0.4);
+}
+
+/* Command palette open state */
+[data-command-palette].open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Theme switching is handled by CSS variables (no filters) */

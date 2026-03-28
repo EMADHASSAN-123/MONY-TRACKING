@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#22d3ee" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <title>الادارة المالية لمركز الشفاء القرأني</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: { 
+            fontFamily: {
+              sans: ["Tajawal", "system-ui", "sans-serif"],
+            },
+            colors: {
+              /* Tokens so existing Tailwind classes auto-adapt per theme */
+              white: "rgb(var(--mony-text) / <alpha-value>)",
+              black: "rgb(var(--mony-surface-rgb) / <alpha-value>)",
+              backdrop: "rgb(var(--mony-backdrop-rgb) / <alpha-value>)",
+
+              zinc: {
+                950: "rgb(var(--mony-bg-rgb) / <alpha-value>)",
+                900: "rgb(var(--mony-panel-rgb) / <alpha-value>)",
+              },
+
+              cyan: {
+                100: "rgb(var(--mony-cyan-rgb) / <alpha-value>)",
+                200: "rgb(var(--mony-cyan-rgb) / <alpha-value>)",
+                300: "rgb(var(--mony-cyan-rgb) / <alpha-value>)",
+                400: "rgb(var(--mony-cyan-rgb) / <alpha-value>)",
+                500: "rgb(var(--mony-cyan-rgb) / <alpha-value>)",
+                600: "rgb(var(--mony-cyan-rgb) / <alpha-value>)",
+              },
+
+              violet: {
+                100: "rgb(var(--mony-violet-rgb) / <alpha-value>)",
+                200: "rgb(var(--mony-violet-rgb) / <alpha-value>)",
+                400: "rgb(var(--mony-violet-rgb) / <alpha-value>)",
+                500: "rgb(var(--mony-violet-rgb) / <alpha-value>)",
+                600: "rgb(var(--mony-violet-rgb) / <alpha-value>)",
+              },
+
+              emerald: {
+                200: "rgb(var(--mony-emerald-rgb) / <alpha-value>)",
+                300: "rgb(var(--mony-emerald-rgb) / <alpha-value>)",
+                400: "rgb(var(--mony-emerald-rgb) / <alpha-value>)",
+                500: "rgb(var(--mony-emerald-rgb) / <alpha-value>)",
+                600: "rgb(var(--mony-emerald-rgb) / <alpha-value>)",
+              },
+
+              rose: {
+                300: "rgb(var(--mony-rose-rgb) / <alpha-value>)",
+                400: "rgb(var(--mony-rose-rgb) / <alpha-value>)",
+                500: "rgb(var(--mony-rose-rgb) / <alpha-value>)",
+              },
+
+              fuchsia: {
+                500: "rgb(var(--mony-fuchsia-rgb) / <alpha-value>)",
+                600: "rgb(var(--mony-fuchsia-rgb) / <alpha-value>)",
+              },
+            },
+          },
+        },
+      };
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles/main.css" />
+    <script>
+      window.MONY_CONFIG = {
+        supabaseUrl: "https://nimcymnngnywsogflaqt.supabase.co",
+        supabaseAnonKey:
+          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5pbWN5bW5uZ255d3NvZ2ZsYXF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzNzY2OTgsImV4cCI6MjA4OTk1MjY5OH0.Qz3BzZCEHeWr6P2M06OBU5SQSDMKydj4Qx-0yGpGEfA",
+        useEdgeFunctions: true,
+      };
+    </script>
+  </head>
+  <body class="mony-app-bg min-h-screen text-white antialiased">
+    <div
+      id="auth-gate"
+      class="fixed inset-0 z-[300] flex items-center justify-center bg-zinc-950/95 p-4 backdrop-blur-xl"
+    >
+      <div
+        class="w-full max-w-md rounded-2xl border border-white/10 bg-zinc-900/80 p-8 shadow-2xl shadow-cyan-500/10"
+      >
+        <p class="text-center text-xs uppercase tracking-[0.3em] text-cyan-400/80">
+          الادارة المالية لمركز الشفاء القرأني
+        </p>
+        <h1 class="mt-2 text-center text-2xl font-black text-white">تسجيل الدخول</h1>
+        <p class="mt-2 text-center text-sm text-white/45">
+          يمكنك الدخول بكلمة المرور أو عبر رابط سحري يصل إلى بريدك.
+        </p>
+        <form id="auth-form" class="mt-6 space-y-4">
+          <label class="block">
+            <span class="mb-1 block text-xs text-white/50">البريد</span>
+            <input
+              name="email"
+              type="email"
+              required
+              class="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-sm outline-none focus:border-cyan-400/40"
+              autocomplete="username"
+            />
+          </label>
+          <label class="block">
+            <span class="mb-1 block text-xs text-white/50">كلمة المرور</span>
+            <input
+              name="password"
+              type="password"
+              minlength="6"
+              class="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-sm outline-none focus:border-cyan-400/40"
+              autocomplete="current-password"
+            />
+            <span class="mt-1 block text-[11px] text-white/35">مطلوبة فقط للدخول/التسجيل بكلمة المرور.</span>
+          </label>
+          <p id="auth-err" class="hidden text-sm text-rose-300"></p>
+          <div class="flex gap-2">
+            <button
+              type="submit"
+              data-auth="login"
+              class="flex-1 rounded-xl bg-cyan-500 py-3 text-sm font-bold text-zinc-950 hover:bg-cyan-400"
+            >
+              دخول
+            </button>
+            <button
+              type="button"
+              data-auth="signup"
+              class="flex-1 rounded-xl border border-white/15 py-3 text-sm font-semibold text-white hover:bg-white/5"
+            >
+              تسجيل
+            </button>
+          </div>
+          <button
+            type="button"
+            data-auth="magic-link"
+            class="w-full rounded-xl border border-cyan-300/30 bg-cyan-500/10 py-3 text-sm font-semibold text-cyan-100 hover:bg-cyan-500/20"
+          >
+            إرسال رابط دخول إلى البريد (Magic Link)
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <div id="app-shell" class="hidden min-h-screen w-full flex-col lg:flex lg:flex-row">
+      <aside
+        id="nav-drawer"
+        class="fixed inset-y-0 right-0 z-[240] w-72 translate-x-full transform flex flex-col border-b border-white/5 bg-zinc-950/80 px-4 py-6 backdrop-blur-md transition-transform duration-200 lg:static lg:translate-x-0 lg:w-56 lg:border-b-0 lg:border-e"
+      >
+        <button
+          type="button"
+          id="btn-nav-close"
+          class="absolute left-4 top-4 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white/80 hover:bg-white/10 lg:hidden"
+          aria-label="إغلاق القائمة"
+        >
+          ✕
+        </button>
+        <div class="mb-8 flex items-center gap-2 px-2">
+          <span class="text-2xl">◈</span>
+          <div>
+            <p class="text-xs font-bold uppercase tracking-widest text-cyan-400/90">الادارة المالية</p>
+            <p class="text-[10px] text-white/35">لمركز الشفاء القرأني</p>
+          </div>
+        </div>
+        <nav
+          id="main-nav"
+          class="flex flex-1 flex-col gap-1 overflow-y-auto overscroll-contain"
+        ></nav>
+        <div class="mt-6 space-y-2 border-t border-white/5 pt-4">
+          <button
+            type="button"
+            id="btn-palette-hint"
+            class="w-full rounded-lg px-3 py-2 text-right text-xs text-white/40 hover:bg-white/5 hover:text-white/70"
+          >
+            ⌘ لوحة الأوامر <kbd class="rounded bg-white/10 px-1.5 py-0.5 font-mono text-[10px]">Ctrl+K</kbd>
+          </button>
+          <button
+            type="button"
+            id="btn-signout"
+            class="w-full rounded-lg px-3 py-2 text-right text-sm text-rose-300/90 hover:bg-rose-500/10"
+          >
+            خروج
+          </button>
+        </div>
+      </aside>
+      <div
+        id="nav-drawer-overlay"
+        class="fixed inset-0 z-[230] hidden bg-backdrop/60 opacity-0 pointer-events-none transition-opacity duration-200 lg:hidden"
+        aria-hidden="true"
+      ></div>
+      <div class="flex min-h-screen flex-1 flex-col">
+        <header
+          class="flex items-center justify-between gap-4 border-b border-white/5 bg-zinc-950/50 px-4 py-3 backdrop-blur-md lg:px-8"
+        >
+          <div class="flex min-w-0 items-center gap-3">
+            <button
+              type="button"
+              id="btn-nav-toggle"
+              class="lg:hidden shrink-0 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white/85 hover:bg-white/10"
+              aria-label="فتح القائمة"
+              aria-controls="nav-drawer"
+              aria-expanded="false"
+            >
+              ☰
+            </button>
+            <button
+              type="button"
+              id="btn-theme-toggle"
+              class="shrink-0 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white/85 hover:bg-white/10"
+              aria-label="تبديل الثيم"
+              title="تبديل الثيم (فاتح/داكن)"
+            >
+              ☾
+            </button>
+            <button
+              type="button"
+              id="btn-theme-customize"
+              class="hidden shrink-0 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white/85 hover:bg-white/10 sm:inline-flex sm:items-center sm:gap-1"
+              aria-label="تخصيص الألوان"
+              title="تخصيص ألوان الواجهة"
+            >
+              🎨
+            </button>
+            <p
+              id="route-title"
+              class="min-w-0 truncate text-sm font-semibold text-white/80"
+            ></p>
+          </div>
+          <span id="live-badge" class="rounded-full bg-emerald-500/15 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-emerald-300 ring-1 ring-emerald-400/30">
+            بث مباشر
+          </span>
+        </header>
+        <main id="app-outlet" class="flex-1 overflow-y-auto p-4 lg:p-8"></main>
+      </div>
+    </div>
+
+    <div
+      data-command-palette
+      class="fixed inset-0 z-[250] flex items-start justify-center bg-black/60 p-4 pt-[15vh] opacity-0 pointer-events-none transition-opacity duration-200"
+    >
+      <div
+        class="w-full max-w-lg overflow-hidden rounded-2xl border border-white/10 bg-zinc-950 shadow-2xl shadow-cyan-500/10"
+      >
+        <input
+          type="search"
+          data-palette-input
+          placeholder="انتقل إلى… (اكتب للتصفية)"
+          class="w-full border-b border-white/10 bg-black/30 px-4 py-4 text-sm text-white outline-none placeholder:text-white/30"
+        />
+        <ul data-palette-list class="max-h-72 overflow-y-auto p-2"></ul>
+      </div>
+    </div>
+
+    <!-- Theme customizer modal -->
+    <div
+      id="theme-customizer"
+      class="fixed inset-0 z-[260] flex items-start justify-center bg-backdrop/60 p-4 pt-[15vh] opacity-0 pointer-events-none transition-opacity duration-200"
+      aria-hidden="true"
+    >
+      <div
+        class="w-full max-w-md overflow-hidden rounded-2xl border border-white/10 bg-zinc-950 shadow-2xl shadow-cyan-500/10"
+      >
+        <div class="flex items-center justify-between border-b border-white/10 px-5 py-3">
+          <h2 class="text-sm font-bold text-white/90">تخصيص ألوان الواجهة</h2>
+          <button
+            type="button"
+            id="btn-theme-customize-close"
+            class="rounded-lg p-1.5 text-white/60 hover:bg-white/10 hover:text-white"
+            aria-label="إغلاق"
+          >
+            ✕
+          </button>
+        </div>
+        <form id="theme-customize-form" class="space-y-4 px-5 py-4 text-sm text-white/85">
+          <p class="text-xs text-white/45">
+            اختر ألوان الأدوار الرئيسية. تُطبّق التغييرات فور الحفظ ويمكن إعادتها للوضع الافتراضي في أي وقت.
+          </p>
+          <div class="grid gap-3 sm:grid-cols-2">
+            <label class="flex items-center justify-between gap-3">
+              <span class="text-xs text-white/70">اللون الرئيسي (إبراز)</span>
+              <input id="color-cyan" name="color-cyan" type="color" class="h-8 w-16 rounded border border-white/20 bg-transparent p-0" />
+            </label>
+            <label class="flex items-center justify-between gap-3">
+              <span class="text-xs text-white/70">اللون الثانوي</span>
+              <input id="color-violet" name="color-violet" type="color" class="h-8 w-16 rounded border border-white/20 bg-transparent p-0" />
+            </label>
+            <label class="flex items-center justify-between gap-3">
+              <span class="text-xs text-white/70">لون النجاح</span>
+              <input id="color-emerald" name="color-emerald" type="color" class="h-8 w-16 rounded border border-white/20 bg-transparent p-0" />
+            </label>
+            <label class="flex items-center justify-between gap-3">
+              <span class="text-xs text-white/70">لون التحذير/الخطأ</span>
+              <input id="color-rose" name="color-rose" type="color" class="h-8 w-16 rounded border border-white/20 bg-transparent p-0" />
+            </label>
+          </div>
+          <div class="mt-2 flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-3">
+            <button
+              type="button"
+              id="btn-theme-customize-reset"
+              class="rounded-xl border border-white/15 px-3 py-2 text-xs text-white/80 hover:bg-white/5"
+            >
+              إعادة الإعدادات الافتراضية
+            </button>
+            <div class="flex gap-2">
+              <button
+                type="button"
+                id="btn-theme-customize-cancel"
+                class="rounded-xl border border-white/15 px-3 py-2 text-xs text-white/80 hover:bg-white/5"
+              >
+                إلغاء
+              </button>
+              <button
+                type="submit"
+                class="rounded-xl bg-cyan-500 px-4 py-2 text-xs font-bold text-zinc-950 hover:bg-cyan-400"
+              >
+                حفظ التخصيص
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>

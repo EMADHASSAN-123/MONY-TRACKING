@@ -1,0 +1,11 @@
+{
+  "name": "mony-finance-spa",
+  "private": true,
+  "version": "1.0.0",
+  "description": "SPA لإدارة الحوالات والمصروفات مع Supabase Realtime",
+  "scripts": {
+    "dev": "npx --yes serve . -p 5173",
+    "start": "npx --yes serve . -p 5173",
+    "deploy:edge": "supabase functions deploy transactions && supabase functions deploy expenses && supabase functions deploy reports && supabase functions deploy admin-users"
+  }
+}
