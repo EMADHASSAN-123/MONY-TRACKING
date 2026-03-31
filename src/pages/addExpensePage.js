@@ -4,7 +4,7 @@ import { navigate, getHashSearchParams } from "../router.js";
 import { ROUTES, isUuid } from "../utils/constants.js";
 
 /**
- * @param {HTMLElement} container
+ * @param {HTMLElement} container 
  */
 export function mount(container) {
   const params = getHashSearchParams();

@@ -42,7 +42,7 @@ export const TASK_DETAIL_PREFIX = "/tasks/";
 export const APP_CURRENCIES = [
   { id: "SAR", labelAr: "ريال سعودي", labelShort: "ر.س" },
   { id: "YER", labelAr: "ريال يمني", labelShort: "ر.ي" },
-  { id: "AED", labelAr: "درهم إماراتي", labelShort: "د" },
+  { id: "$", labelAr: " دولار", labelShort: "د" },
 ];
 
 /** @param {string|undefined|null} code */
@@ -98,13 +98,14 @@ export const TX_CATEGORIES = [
   { id: "family", label: "عائلي", emoji: " " },
   { id: "business", label: "عمل", emoji: " " },
   { id: "urgent", label: "رواتب", emoji: " " },
+  { id: "celebrate", label: "احتفال", emoji: " " },
   { id: "general", label: "عام", emoji: " " },
 ];
 
 export const EX_CATEGORIES = [
-  { id: "food", label: "طعام", emoji: "" },
+  { id: "services", label: "خدمات", emoji: "" },
   { id: "transport", label: "مواصلات", emoji: "" },
-  { id: "bills", label: "فواتير", emoji: "" },
+  { id: "transfer", label: "تحويل", emoji: "" },
   { id: "general", label: "عام", emoji: "" },
 ];
 

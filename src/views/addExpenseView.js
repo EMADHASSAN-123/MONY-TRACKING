@@ -55,8 +55,8 @@ export function mountAddExpense(root, api) {
             ${opts || '<option value="">— لا حوالات —</option>'}
           </select>
         </label>
-        <p class="text-xs text-white/40" data-cur-hint>العملة تُستمد من الحوالة المختارة</p>
-        ${fieldHTML({ id: "description", label: "الوصف", required: true, placeholder: "مثال: فاتورة كهرباء" })}
+        <p class="text-xs text-white/40" data-cur-hint>العملة بحسب الحوالة المختارة</p>
+        ${fieldHTML({ id: "description", label: "الوصف", required: true, placeholder: "مثال:تحويل راتب " })}
         ${fieldHTML({ id: "amount", label: "المبلغ", type: "number", step: "0.01", required: true })}
         ${fieldHTML({ id: "expense_date", label: "التاريخ", type: "date", value: todayISODate(), required: true })}
         <label class="block" for="category">

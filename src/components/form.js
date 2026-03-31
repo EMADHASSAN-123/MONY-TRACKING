@@ -33,23 +33,43 @@ export function getFormData(form) {
   });
   return o;
 }
-
+ 
 /**
  * @param {HTMLElement} form
  * @param {string} message
  * @param {"error"|"ok"} kind
  */
-export function showFormMessage(form, message, kind = "error") {
+const messageTimers = new WeakMap();
+
+export function showFormMessage(form, message, kind = "error", duration = 3000) {
   let el = form.querySelector("[data-form-message]");
+
   if (!el) {
     el = document.createElement("p");
     el.setAttribute("data-form-message", "");
     el.className = "mt-3 text-sm";
     form.appendChild(el);
   }
+
+  // إلغاء أي مؤقت سابق لهذا الفورم
+  if (messageTimers.has(form)) {
+    clearTimeout(messageTimers.get(form));
+  }
+
   el.textContent = message;
+
   el.className =
     kind === "error"
       ? "mt-3 text-sm text-rose-300"
       : "mt-3 text-sm text-emerald-300";
+
+  if (message) {
+    const timer = setTimeout(() => {
+      el.textContent = "";
+      el.style.display = "none";
+    }, duration);
+
+    messageTimers.set(form, timer);
+    el.style.display = "block";
+  }
 }

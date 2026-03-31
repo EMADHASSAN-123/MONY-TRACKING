@@ -512,7 +512,7 @@ export async function addExpense(row) {
   emit("realtime", { local: true, table: "expenses" });
   return created;
 }
-
+ 
 /** @param {string} id */
 export async function removeTransaction(id) {
   if (!navigator.onLine) {
