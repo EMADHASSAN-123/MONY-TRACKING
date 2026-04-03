@@ -34,7 +34,7 @@ export const ROUTES = {
 
 /** بادئة مسار تفاصيل الحوالة: #/transactions/{uuid} */
 export const TRANSACTION_DETAIL_PREFIX = "/transactions/";
-
+ 
 /** بادئة مسار تفاصيل المهمة: #/tasks/{uuid} */
 export const TASK_DETAIL_PREFIX = "/tasks/";
 

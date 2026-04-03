@@ -33,7 +33,7 @@ export function getFormData(form) {
   });
   return o;
 }
- 
+
 /**
  * @param {HTMLElement} form
  * @param {string} message

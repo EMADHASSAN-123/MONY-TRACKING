@@ -108,6 +108,8 @@ export function mountAddExpense(root, api) {
     txSel?.addEventListener("change", syncCurrencyHint);
     syncCurrencyHint();
 
+    const submitBtn = /** @type {HTMLButtonElement | null} */ (form.querySelector('button[type="submit"]'));
+    const submitLabel = submitBtn?.textContent?.trim() || "حفظ المصروف";
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       const raw = getFormData(form);
@@ -124,6 +126,10 @@ export function mountAddExpense(root, api) {
         return;
       }
       try {
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.textContent = "جاري الحفظ…";
+        }
         await api.onSubmit(payload);
         showFormMessage(form, "تم الحفظ بنجاح ✓", "ok");
         form.reset();
@@ -136,6 +142,11 @@ export function mountAddExpense(root, api) {
         syncCurrencyHint();
       } catch (err) {
         showFormMessage(form, err instanceof Error ? err.message : "فشل الحفظ", "error");
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = submitLabel;
+        }
       }
     });
   }

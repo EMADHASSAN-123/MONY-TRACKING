@@ -1,7 +1,7 @@
 import { edgeFetch } from "./apiClient.js";
 import { getSupabase } from "./supabaseClient.js";
 import { EDGE_FUNCTION_SLUGS, getConfig } from "../utils/constants.js";
-
+ 
 function useEdge() {
   return getConfig().useEdgeFunctions;
 }

@@ -8,7 +8,7 @@ import { enqueueJob, readQueue, removeJobById } from "./offline/syncQueue.js";
 /** @typedef {{ id: string, sender: string, beneficiary: string, amount: number|string, transaction_date: string, category?: string, currency?: string, created_at?: string, user_id?: string }} Transaction */
 /** @typedef {{ id: string, description: string, amount: number|string, expense_date: string, category?: string, transaction_id: string, currency?: string, created_at?: string, user_id?: string }} Expense */
 /** @typedef {{ id: string, title: string, description?: string, priority?: string, status?: string, due_at?: string|null, created_by: string, assigned_to: string, created_at?: string, updated_at?: string }} Task */
-
+ 
 /** @type {Transaction[]} */
 let transactions = [];
 /** @type {Expense[]} */
@@ -99,7 +99,7 @@ export async function refreshTransactions(options = {}) {
   try {
     transactions = await txApi.fetchTransactions();
     emit("transactions", transactions);
-    if (!skipReportRefresh) await refreshReportsQuiet();
+    if (!skipReportRefresh) scheduleReportsRefresh();
   } catch (e) {
     setError(e instanceof Error ? e.message : "فشل تحميل الحوالات");
   } finally {
@@ -107,7 +107,7 @@ export async function refreshTransactions(options = {}) {
     if (!silent) emit("loading", loading);
   }
 }
-
+ 
 /**
  * @param {{ silent?: boolean, skipReportRefresh?: boolean }} [options]
  */
@@ -118,7 +118,7 @@ export async function refreshExpenses(options = {}) {
   try {
     expenses = await exApi.fetchExpenses();
     emit("expenses", expenses);
-    if (!skipReportRefresh) await refreshReportsQuiet();
+    if (!skipReportRefresh) scheduleReportsRefresh();
   } catch (e) {
     setError(e instanceof Error ? e.message : "فشل تحميل المصروفات");
   } finally {
@@ -142,6 +142,11 @@ async function refreshReportsQuiet() {
   } finally {
     inFlightReportPromise = null;
   }
+}
+
+/** يحدّث التقرير في الخلفية دون حظر الحفظ/الحذف أو معالجات البث (inFlightReportPromise يمنع ازدواجية الطلبات). */
+function scheduleReportsRefresh() {
+  refreshReportsQuiet().catch(() => {});
 }
 
 /**
@@ -238,26 +243,26 @@ export function setupRealtime() {
     .on(
       "postgres_changes",
       { event: "*", schema: "public", table: "transactions" },
-      async (payload) => {
+      (payload) => {
         if (payload.eventType === "DELETE") {
           removeTx(payload.old.id);
         } else if (payload.eventType === "INSERT" || payload.eventType === "UPDATE") {
           upsertTx(/** @type {*} */ (payload.new));
         }
-        await refreshReportsQuiet();
+        scheduleReportsRefresh();
         emit("realtime", { table: "transactions", payload });
       },
     )
     .on(
       "postgres_changes",
       { event: "*", schema: "public", table: "expenses" },
-      async (payload) => {
+      (payload) => {
         if (payload.eventType === "DELETE") {
           removeEx(payload.old.id);
         } else if (payload.eventType === "INSERT" || payload.eventType === "UPDATE") {
           upsertEx(/** @type {*} */ (payload.new));
         }
-        await refreshReportsQuiet();
+        scheduleReportsRefresh();
         emit("realtime", { table: "expenses", payload });
       },
     )
@@ -276,19 +281,26 @@ export function setupRealtime() {
     .subscribe();
 }
 
+// مسؤلة عن تهيئة التطبيق و
+/*
+تهيئة حالة التطبيق بناءً على حالة تسجيل الدخول الحالية 
+(Session
+*/
 export async function bootState() {
   loading.boot = true;
   emit("loading", loading);
   const sb = getSupabase();
   const { data } = await sb.auth.getSession();
+  // استرجاع الجلسة (Session)
   sessionUser = data.session?.user ?? null;
-
+// الاشتراك في تغيرات المصادقة (Auth Listener)
   sb.auth.onAuthStateChange(async (event, session) => {
     sessionUser = session?.user ?? null;
+    // تجاهل أول حدث: لأن جلبت الجلسة فوق
     if (event === "INITIAL_SESSION") return;
     if (sessionUser) {
-      await loadAllForUser();
       setupRealtime();
+      void loadAllForUser().catch(() => {});
     } else {
       teardownRealtime();
       transactions = [];
@@ -306,13 +318,15 @@ export async function bootState() {
   });
 
   if (sessionUser) {
-    await loadAllForUser();
     setupRealtime();
     setupOfflineSync();
   }
   loading.boot = false;
   emit("loading", loading);
   emit("auth", sessionUser);
+  if (sessionUser) {
+    void loadAllForUser().catch(() => {});
+  }
 }
 
 function setupOfflineSync() {
@@ -374,7 +388,7 @@ async function processOfflineQueue() {
       }
       removeJobById(job.id);
     }
-    await refreshReportsQuiet();
+    scheduleReportsRefresh();
     emit("sync", { running: false, pending: 0, ok: true });
   } catch (e) {
     emit("sync", {
@@ -476,13 +490,13 @@ export async function addTransaction(row) {
     };
     enqueueJob("createTransaction", { tempId: tId, row });
     upsertTx(/** @type {*} */ (optimistic));
-    await refreshReportsQuiet();
+    scheduleReportsRefresh();
     emit("sync", { running: false, pending: readQueue().length, queued: true });
     return optimistic;
   }
   const created = await txApi.createTransaction(row);
   upsertTx(created);
-  await refreshReportsQuiet();
+  scheduleReportsRefresh();
   emit("realtime", { local: true, table: "transactions" });
   return created;
 }
@@ -502,13 +516,13 @@ export async function addExpense(row) {
     };
     enqueueJob("createExpense", { tempId: eId, row });
     upsertEx(/** @type {*} */ (optimistic));
-    await refreshReportsQuiet();
+    scheduleReportsRefresh();
     emit("sync", { running: false, pending: readQueue().length, queued: true });
     return optimistic;
   }
   const created = await exApi.createExpense(row);
   upsertEx(created);
-  await refreshReportsQuiet();
+  scheduleReportsRefresh();
   emit("realtime", { local: true, table: "expenses" });
   return created;
 }
@@ -518,13 +532,13 @@ export async function removeTransaction(id) {
   if (!navigator.onLine) {
     enqueueJob("deleteTransaction", { id });
     removeTx(id);
-    await refreshReportsQuiet();
+    scheduleReportsRefresh();
     emit("sync", { running: false, pending: readQueue().length, queued: true });
     return true;
   }
   await txApi.deleteTransaction(id);
   removeTx(id);
-  await refreshReportsQuiet();
+  scheduleReportsRefresh();
 }
 
 /** @param {string} id */
@@ -532,13 +546,13 @@ export async function removeExpense(id) {
   if (!navigator.onLine) {
     enqueueJob("deleteExpense", { id });
     removeEx(id);
-    await refreshReportsQuiet();
+    scheduleReportsRefresh();
     emit("sync", { running: false, pending: readQueue().length, queued: true });
     return true;
   }
   await exApi.deleteExpense(id);
   removeEx(id);
-  await refreshReportsQuiet();
+  scheduleReportsRefresh();
 }
 
 /**
@@ -570,3 +584,11 @@ export async function removeTaskById(id) {
   return true;
 }
 
+/** أهم مفاهيم احترافية في الكود
+Separation of Concerns
+Event-driven architecture
+State-driven UI
+Lazy execution (events لا تعمل إلا عند التفاعل)
+Client-side routing
+Progressive enhancement (PWA + offline)
+ */

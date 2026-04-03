@@ -527,11 +527,24 @@ async function init() {
   setupCommandPalette();
   setupAuthForm();
 
+  // قراءة المسار
   function applyRoute() {
     const path = getRoute();
-    if (path === ROUTES.ADMIN_USERS && !isStaffRole(state.getState().profile?.role)) {
-      navigate(ROUTES.DASHBOARD);
-      return;
+    if (path === ROUTES.ADMIN_USERS) {
+      const prof = state.getState().profile;
+      if (prof && !isStaffRole(prof.role)) {
+        navigate(ROUTES.DASHBOARD);
+        return;
+      }
+      if (!prof) {
+        const outlet = document.getElementById("app-outlet");
+        if (outlet) {
+          unmountOutlet();
+          unmountOutlet = () => {};
+          outlet.innerHTML = `<div class="p-8 text-center text-sm text-white/50">جاري التحقق من الصلاحيات…</div>`;
+        }
+        return;
+      }
     }
     if (path === ROUTES.ADD_EXPENSE) {
       const tx = getHashSearchParams().get("transaction_id");
@@ -564,7 +577,9 @@ async function init() {
   });
 
   state.subscribe("profile", () => {
-    if (state.getState().sessionUser) renderNav();
+    if (!state.getState().sessionUser) return;
+    renderNav();
+    if (getRoute() === ROUTES.ADMIN_USERS) applyRoute();
   });
 
   state.subscribe("sync", (s) => {

@@ -46,6 +46,8 @@ export function mountAddTransaction(root, api) {
   `;
 
   const form = /** @type {HTMLFormElement} */ (root.querySelector("#tx-form"));
+  const submitBtn = /** @type {HTMLButtonElement | null} */ (form.querySelector('button[type="submit"]'));
+  const submitLabel = submitBtn?.textContent?.trim() || "حفظ الحوالة";
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     const raw = getFormData(form);
@@ -63,6 +65,10 @@ export function mountAddTransaction(root, api) {
       return;
     }
     try {
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = "جاري الحفظ…";
+      }
       await api.onSubmit(payload);
       showFormMessage(form, "تم الحفظ بنجاح ✓", "ok");
       form.reset();
@@ -70,6 +76,11 @@ export function mountAddTransaction(root, api) {
       if (d) d.value = todayISODate();
     } catch (err) {
       showFormMessage(form, err instanceof Error ? err.message : "فشل الحفظ", "error");
+    } finally {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = submitLabel;
+      }
     }
   });
 
