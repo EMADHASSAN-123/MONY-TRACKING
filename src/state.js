@@ -2,7 +2,7 @@ import * as txApi from "./api/transactions.js";
 import * as exApi from "./api/expenses.js";
 import * as repApi from "./api/reports.js";
 import * as tasksApi from "./api/tasks.js";
-import { getSupabase } from "./api/supabaseClient.js";
+import { getSupabase, clearAccessTokenCache } from "./api/supabaseClient.js";
 import { enqueueJob, readQueue, removeJobById } from "./offline/syncQueue.js";
 
 /** @typedef {{ id: string, sender: string, beneficiary: string, amount: number|string, transaction_date: string, category?: string, currency?: string, created_at?: string, user_id?: string }} Transaction */
@@ -473,6 +473,7 @@ export async function signInWithMagicLink(email) {
 export async function signOut() {
   const sb = getSupabase();
   await sb.auth.signOut();
+  clearAccessTokenCache();
 }
 
 /**
@@ -553,6 +554,32 @@ export async function removeExpense(id) {
   await exApi.deleteExpense(id);
   removeEx(id);
   scheduleReportsRefresh();
+}
+
+/**
+ * @param {string} id
+ * @param {Parameters<typeof txApi.updateTransaction>[1]} patch
+ */
+export async function patchTransaction(id, patch) {
+  if (!navigator.onLine) throw new Error("التعديل يتطلب اتصالاً بالشبكة");
+  const updated = await txApi.updateTransaction(id, patch);
+  upsertTx(updated);
+  scheduleReportsRefresh();
+  emit("realtime", { local: true, table: "transactions" });
+  return updated;
+}
+
+/**
+ * @param {string} id
+ * @param {Parameters<typeof exApi.updateExpense>[1]} patch
+ */
+export async function patchExpense(id, patch) {
+  if (!navigator.onLine) throw new Error("التعديل يتطلب اتصالاً بالشبكة");
+  const updated = await exApi.updateExpense(id, patch);
+  upsertEx(updated);
+  scheduleReportsRefresh();
+  emit("realtime", { local: true, table: "expenses" });
+  return updated;
 }
 
 /**

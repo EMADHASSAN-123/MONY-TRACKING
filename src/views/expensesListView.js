@@ -1,5 +1,10 @@
 import { formatCurrency, formatDate } from "../utils/helpers.js";
-import { EX_CATEGORIES, isStaffRole, TRANSACTION_DETAIL_PREFIX } from "../utils/constants.js";
+import {
+  EX_CATEGORIES,
+  isStaffRole,
+  TRANSACTION_DETAIL_PREFIX,
+  LIST_VIEW_PAGE_STEP,
+} from "../utils/constants.js";
 
 function emojiFor(cat) {
   return EX_CATEGORIES.find((c) => c.id === cat)?.label ?? "✨";
@@ -36,6 +41,11 @@ export function mountExpensesList(root, api) {
           <tbody data-rows></tbody>
         </table>
       </div>
+      <div class="hidden flex justify-center pt-2" data-ex-more-wrap>
+        <button type="button" data-ex-load-more class="rounded-xl border border-white/15 bg-white/[0.04] px-5 py-2.5 text-sm text-white/85 hover:bg-white/10">
+          عرض المزيد
+        </button>
+      </div>
     </div>
   `;
 
@@ -43,16 +53,43 @@ export function mountExpensesList(root, api) {
   const tbody = root.querySelector("[data-rows]");
   const countEl = root.querySelector("[data-count]");
   const thOwner = root.querySelector("[data-th-owner]");
+  const moreWrap = root.querySelector("[data-ex-more-wrap]");
+  let visibleCount = LIST_VIEW_PAGE_STEP;
 
-  const render = () => {
+  const ac = new AbortController();
+  root.addEventListener(
+    "click",
+    (e) => {
+      const t = e.target.closest("[data-ex-load-more]");
+      if (!t) return;
+      e.preventDefault();
+      visibleCount += LIST_VIEW_PAGE_STEP;
+      render();
+    },
+    { signal: ac.signal },
+  );
+
+  function render() {
     const st = api.getState();
     const staff = isStaffRole(st.profile?.role);
     if (thOwner) {
       thOwner.classList.toggle("hidden", !staff);
       thOwner.classList.toggle("table-cell", staff);
     }
-    const rows = st.expenses;
-    countEl.textContent = `${rows.length} عددالمصروفات  `;
+    const all = st.expenses;
+    const rows = all.slice(0, visibleCount);
+    const rest = all.length - rows.length;
+    countEl.textContent =
+      all.length <= visibleCount
+        ? `${all.length} مصروف`
+        : `${rows.length} معروض من ${all.length} مصروف`;
+    if (moreWrap) {
+      const showMore = rest > 0;
+      moreWrap.classList.toggle("hidden", !showMore);
+      moreWrap.classList.toggle("flex", showMore);
+      const btn = moreWrap.querySelector("[data-ex-load-more]");
+      if (btn) btn.textContent = `عرض المزيد (${Math.min(LIST_VIEW_PAGE_STEP, rest)} من ${rest} متبقية)`;
+    }
     if (mobileRows) {
       mobileRows.innerHTML = rows
         .map((t) => {
@@ -147,7 +184,7 @@ export function mountExpensesList(root, api) {
         await api.onDelete(id);
       });
     });
-  };
+  }
 
   function escape(s) {
     return String(s)
@@ -164,6 +201,7 @@ export function mountExpensesList(root, api) {
   render();
 
   return () => {
+    ac.abort();
     unsub.forEach((u) => u());
     root.innerHTML = "";
   };

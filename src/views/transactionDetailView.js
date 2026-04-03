@@ -1,9 +1,279 @@
 import { formatCurrency, formatDate } from "../utils/helpers.js";
-import { TX_CATEGORIES, ROUTES, currencyShortLabel } from "../utils/constants.js";
+import {
+  TX_CATEGORIES,
+  EX_CATEGORIES,
+  ROUTES,
+  APP_CURRENCIES,
+  currencyShortLabel,
+} from "../utils/constants.js";
 import { downloadTransferExcel, openTransferPrintPdf } from "../utils/exportTransfer.js";
+import { fieldHTML, getFormData, showFormMessage } from "../components/form.js";
+import { validateTransaction, validateExpense } from "../utils/validators.js";
+import { createModalShell } from "../components/modal.js";
 
 function txEmoji(cat) {
   return TX_CATEGORIES.find((c) => c.id === cat)?.emoji ?? "✨";
+}
+
+function escapeAttr(s) {
+  return String(s)
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+/**
+ * @param {HTMLElement} shell
+ */
+function showModal(shell) {
+  document.body.appendChild(shell);
+  requestAnimationFrame(() => {
+    shell.classList.remove("opacity-0", "pointer-events-none");
+    shell.classList.add("opacity-100");
+  });
+}
+
+/**
+ * @param {HTMLElement} shell
+ */
+function hideModal(shell) {
+  shell.classList.add("opacity-0", "pointer-events-none");
+  shell.classList.remove("opacity-100");
+  setTimeout(() => shell.remove(), 200);
+}
+
+/**
+ * @param {HTMLElement} shell
+ * @param {() => void} onClose
+ */
+function wireModalClose(shell, onClose) {
+  shell.querySelector("[data-close]")?.addEventListener("click", onClose);
+  shell.addEventListener("click", (e) => {
+    if (e.target === shell) onClose();
+  });
+}
+
+/**
+ * @param {string} transactionId
+ * @param {{
+ *   getState: Function,
+ *   onPatchTransaction: (id: string, patch: Record<string, unknown>) => Promise<unknown>,
+ * }} api
+ */
+function openEditTransactionModal(transactionId, api) {
+  const tx = api.getState().transactions.find((t) => t.id === transactionId);
+  if (!tx) return;
+
+  const modalId = "mony-edit-tx-modal";
+  document.getElementById(modalId)?.remove();
+
+  const catsOpts = TX_CATEGORIES.map((c) => {
+    const sel = String(tx.category || "general") === c.id ? " selected" : "";
+    return `<option value="${escapeAttr(c.id)}"${sel}>${c.emoji} ${escapeAttr(c.label)}</option>`;
+  }).join("");
+
+  const curVal = tx.currency || "SAR";
+  const curOpts = APP_CURRENCIES.map((c) => {
+    const sel = c.id === curVal ? " selected" : "";
+    return `<option value="${escapeAttr(c.id)}"${sel}>${escapeAttr(c.labelShort)} — ${escapeAttr(c.labelAr)}</option>`;
+  }).join("");
+
+  const html = `
+    <form id="edit-tx-form" class="space-y-3">
+      ${fieldHTML({
+        id: "sender",
+        label: "المرسل",
+        required: true,
+        value: escapeAttr(tx.sender),
+        placeholder: "اسم المرسل",
+      })}
+      ${fieldHTML({
+        id: "beneficiary",
+        label: "المستفيد",
+        required: true,
+        value: escapeAttr(tx.beneficiary),
+        placeholder: "اسم المستفيد",
+      })}
+      ${fieldHTML({
+        id: "amount",
+        label: "المبلغ",
+        type: "number",
+        step: "0.01",
+        required: true,
+        value: escapeAttr(String(tx.amount)),
+      })}
+      ${fieldHTML({
+        id: "transaction_date",
+        label: "التاريخ",
+        type: "date",
+        required: true,
+        value: escapeAttr(tx.transaction_date),
+      })}
+      <label class="block" for="currency">
+        <span class="mb-1.5 block text-xs font-medium uppercase tracking-wider text-white/50">العملة</span>
+        <select id="currency" name="currency" class="w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-white outline-none focus:border-cyan-400/40 focus:ring-2 focus:ring-cyan-400/30">
+          ${curOpts}
+        </select>
+      </label>
+      <label class="block" for="category">
+        <span class="mb-1.5 block text-xs font-medium uppercase tracking-wider text-white/50">التصنيف</span>
+        <select id="category" name="category" class="w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-white outline-none focus:border-cyan-400/40 focus:ring-2 focus:ring-cyan-400/30">
+          ${catsOpts}
+        </select>
+      </label>
+      <button type="submit" class="w-full rounded-xl bg-gradient-to-r from-cyan-500 to-cyan-600 py-3 text-sm font-bold text-zinc-950 shadow-lg shadow-cyan-500/25 hover:brightness-110">
+        حفظ التعديلات
+      </button>
+    </form>
+  `;
+
+  const shell = createModalShell({ id: modalId, title: "تعديل الحوالة", contentHTML: html });
+  const close = () => hideModal(shell);
+  wireModalClose(shell, close);
+  showModal(shell);
+
+  const form = /** @type {HTMLFormElement} */ (shell.querySelector("#edit-tx-form"));
+  if (!form) return;
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const btn = /** @type {HTMLButtonElement | null} */ (form.querySelector('button[type="submit"]'));
+    const label = btn?.textContent?.trim() || "حفظ التعديلات";
+    const raw = getFormData(form);
+    const payload = {
+      sender: raw.sender.trim(),
+      beneficiary: raw.beneficiary.trim(),
+      amount: Number(raw.amount),
+      transaction_date: raw.transaction_date,
+      category: raw.category || "general",
+      currency: raw.currency || "SAR",
+    };
+    const errs = validateTransaction(payload);
+    if (errs.length) {
+      showFormMessage(form, errs.join(" — "), "error");
+      return;
+    }
+    try {
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = "جاري الحفظ…";
+      }
+      await api.onPatchTransaction(transactionId, payload);
+      hideModal(shell);
+    } catch (err) {
+      showFormMessage(form, err instanceof Error ? err.message : "فشل الحفظ", "error");
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = label;
+      }
+    }
+  });
+}
+
+/**
+ * @param {string} transactionId
+ * @param {string} expenseId
+ * @param {{
+ *   getState: Function,
+ *   onPatchExpense: (id: string, patch: Record<string, unknown>) => Promise<unknown>,
+ * }} api
+ */
+function openEditExpenseModal(transactionId, expenseId, api) {
+  const ex = api.getState().expenses.find((x) => x.id === expenseId);
+  if (!ex || ex.transaction_id !== transactionId) return;
+
+  const modalId = "mony-edit-ex-modal";
+  document.getElementById(modalId)?.remove();
+
+  const catsOpts = EX_CATEGORIES.map((c) => {
+    const sel = String(ex.category || "general") === c.id ? " selected" : "";
+    return `<option value="${escapeAttr(c.id)}"${sel}>${escapeAttr(c.label)}</option>`;
+  }).join("");
+
+  const html = `
+    <form id="edit-ex-form" class="space-y-3">
+      ${fieldHTML({
+        id: "description",
+        label: "الوصف",
+        required: true,
+        value: escapeAttr(ex.description),
+        placeholder: "وصف المصروف",
+      })}
+      ${fieldHTML({
+        id: "amount",
+        label: "المبلغ",
+        type: "number",
+        step: "0.01",
+        required: true,
+        value: escapeAttr(String(ex.amount)),
+      })}
+      ${fieldHTML({
+        id: "expense_date",
+        label: "التاريخ",
+        type: "date",
+        required: true,
+        value: escapeAttr(ex.expense_date),
+      })}
+      <label class="block" for="category">
+        <span class="mb-1.5 block text-xs font-medium uppercase tracking-wider text-white/50">التصنيف</span>
+        <select id="category" name="category" class="w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-white outline-none focus:border-violet-400/40 focus:ring-2 focus:ring-violet-400/30">
+          ${catsOpts}
+        </select>
+      </label>
+      <button type="submit" class="w-full rounded-xl bg-gradient-to-r from-violet-500 to-fuchsia-600 py-3 text-sm font-bold text-white shadow-lg shadow-violet-500/25 hover:brightness-110">
+        حفظ التعديلات
+      </button>
+    </form>
+  `;
+
+  const shell = createModalShell({ id: modalId, title: "تعديل المصروف", contentHTML: html });
+  wireModalClose(shell, () => hideModal(shell));
+  showModal(shell);
+
+  const form = /** @type {HTMLFormElement} */ (shell.querySelector("#edit-ex-form"));
+  if (!form) return;
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const btn = /** @type {HTMLButtonElement | null} */ (form.querySelector('button[type="submit"]'));
+    const label = btn?.textContent?.trim() || "حفظ التعديلات";
+    const raw = getFormData(form);
+    const payload = {
+      description: raw.description.trim(),
+      amount: Number(raw.amount),
+      expense_date: raw.expense_date,
+      category: raw.category || "general",
+      transaction_id: transactionId,
+    };
+    const errs = validateExpense(payload);
+    if (errs.length) {
+      showFormMessage(form, errs.join(" — "), "error");
+      return;
+    }
+    const patch = {
+      description: payload.description,
+      amount: payload.amount,
+      expense_date: payload.expense_date,
+      category: payload.category,
+    };
+    try {
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = "جاري الحفظ…";
+      }
+      await api.onPatchExpense(expenseId, patch);
+      hideModal(shell);
+    } catch (err) {
+      showFormMessage(form, err instanceof Error ? err.message : "فشل الحفظ", "error");
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = label;
+      }
+    }
+  });
 }
 
 /**
@@ -15,6 +285,8 @@ function txEmoji(cat) {
  *   navigate: Function,
  *   onDeleteExpense: (id: string) => Promise<void>,
  *   onDeleteTransaction: (id: string) => Promise<void>,
+ *   onPatchTransaction: (id: string, patch: Record<string, unknown>) => Promise<unknown>,
+ *   onPatchExpense: (id: string, patch: Record<string, unknown>) => Promise<unknown>,
  * }} api
  */
 export function mountTransactionDetail(root, transactionId, api) {
@@ -66,8 +338,8 @@ export function mountTransactionDetail(root, transactionId, api) {
       <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <p class="text-xs uppercase tracking-widest text-cyan-400/80">تفاصيل الحوالة</p>
-          <h1 class="mt-2 text-2xl font-black text-white">${txEmoji(tx.category)} ${escape(tx.sender)} → ${escape(tx.beneficiary)}</h1>
-          <p class="mt-2 text-sm text-white/45">${formatDate(tx.transaction_date)} · ${escape(tx.category ?? "")}</p>
+          <h1 class="mt-2 text-2xl font-black text-white">${txEmoji(tx.category)} ${escapeHtml(tx.sender)} → ${escapeHtml(tx.beneficiary)}</h1>
+          <p class="mt-2 text-sm text-white/45">${formatDate(tx.transaction_date)} · ${escapeHtml(tx.category ?? "")}</p>
         </div>
         <div class="grid gap-3 sm:grid-cols-3">
           <div class="rounded-xl border border-cyan-400/25 bg-cyan-500/10 px-4 py-3 text-center">
@@ -77,7 +349,7 @@ export function mountTransactionDetail(root, transactionId, api) {
           <div class="rounded-xl border border-violet-400/25 bg-violet-500/10 px-4 py-3 text-center">
             <p class="text-[10px] uppercase text-white/40">إجمالي المصروفات</p>
             <p class="mt-1 font-mono text-lg font-bold text-violet-100">${formatCurrency(sumEx, cur)}</p>
-          </div> 
+          </div>
           <div class="rounded-xl border border-violet-400/25 bg-violet-500/10 px-4 py-3 text-center">
             <p class="text-[10px] uppercase ">المتبقي</p>
             <p class="mt-1 font-mono text-lg font-bold text-violet-100">${formatCurrency(remaining, cur)}</p>
@@ -85,6 +357,9 @@ export function mountTransactionDetail(root, transactionId, api) {
         </div>
       </div>
       <div class="mt-6 flex flex-wrap gap-2 border-t border-white/10 pt-6">
+        <button type="button" data-edit-tx class="rounded-xl border border-cyan-400/40 bg-cyan-500/10 px-4 py-2.5 text-sm font-semibold text-cyan-100 hover:bg-cyan-500/20">
+          تعديل الحوالة
+        </button>
         <button type="button" data-add-ex class="rounded-xl bg-violet-500 px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-violet-500/20 hover:bg-violet-400">
           + إضافة مصروف لهذه الحوالة
         </button>
@@ -117,10 +392,11 @@ export function mountTransactionDetail(root, transactionId, api) {
           .map(
             (e) => `
       <tr class="border-b border-white/5 transition hover:bg-white/[0.04]">
-        <td class="px-4 py-3 text-white/90">${escape(e.description)}</td>
+        <td class="px-4 py-3 text-white/90">${escapeHtml(e.description)}</td>
         <td class="px-4 py-3 font-mono text-violet-200">${formatCurrency(Number(e.amount), cur)}</td>
         <td class="px-4 py-3 text-white/45">${formatDate(e.expense_date)}</td>
-        <td class="px-4 py-3">
+        <td class="px-4 py-3 text-end whitespace-nowrap">
+          <button type="button" data-edit-ex="${e.id}" class="me-1 rounded-lg px-2 py-1 text-xs text-cyan-200 hover:bg-cyan-500/10">تعديل</button>
           <button type="button" data-del-ex="${e.id}" class="rounded-lg px-2 py-1 text-xs text-rose-300 hover:bg-rose-500/10">حذف</button>
         </td>
       </tr>`,
@@ -136,6 +412,17 @@ export function mountTransactionDetail(root, transactionId, api) {
       });
     });
 
+    tbody.querySelectorAll("[data-edit-ex]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const id = btn.getAttribute("data-edit-ex");
+        if (id) openEditExpenseModal(transactionId, id, api);
+      });
+    });
+
+    elMain.querySelector("[data-edit-tx]")?.addEventListener("click", () => {
+      openEditTransactionModal(transactionId, api);
+    });
+
     elMain.querySelector("[data-add-ex]")?.addEventListener("click", () => {
       api.navigate(`${ROUTES.ADD_EXPENSE}?transaction_id=${transactionId}`);
     });
@@ -146,7 +433,7 @@ export function mountTransactionDetail(root, transactionId, api) {
     });
   };
 
-  function escape(s) {
+  function escapeHtml(s) {
     return String(s)
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
@@ -184,6 +471,8 @@ export function mountTransactionDetail(root, transactionId, api) {
   render();
 
   return () => {
+    document.getElementById("mony-edit-tx-modal")?.remove();
+    document.getElementById("mony-edit-ex-modal")?.remove();
     unsub.forEach((u) => u());
     root.innerHTML = "";
   };

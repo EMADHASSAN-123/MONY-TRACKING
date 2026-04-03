@@ -1,23 +1,29 @@
 import { edgeFetch } from "./apiClient.js";
 import { getSupabase } from "./supabaseClient.js";
-import { EDGE_FUNCTION_SLUGS, getConfig } from "../utils/constants.js";
+import {
+  EDGE_FUNCTION_SLUGS,
+  getConfig,
+  MAX_FETCH_TX_EX,
+  TRANSACTION_ROW_FIELDS,
+} from "../utils/constants.js";
 
 function useEdge() {
   return getConfig().useEdgeFunctions;
 }
 
 export async function fetchTransactions() {
+  const q = `?limit=${MAX_FETCH_TX_EX}&offset=0`;
   if (useEdge()) {
-    const body = await edgeFetch(EDGE_FUNCTION_SLUGS.TRANSACTIONS, "", { method: "GET" });
+    const body = await edgeFetch(EDGE_FUNCTION_SLUGS.TRANSACTIONS, q, { method: "GET" });
     return body.data ?? [];
   }
   const sb = getSupabase();
   const { data, error } = await sb
     .from("transactions")
-    .select("*")
+    .select(TRANSACTION_ROW_FIELDS)
     .order("transaction_date", { ascending: false })
     .order("created_at", { ascending: false })
-    .limit(500);
+    .range(0, MAX_FETCH_TX_EX - 1);
   if (error) throw error;
   return data ?? [];
 }

@@ -19,9 +19,29 @@ export function getSupabase() {
   });
   return client;
 }
-   
+
+/** @type {{ token: string | null, untilSec: number }} */
+let accessTokenCache = { token: null, untilSec: 0 };
+
+export function clearAccessTokenCache() {
+  accessTokenCache = { token: null, untilSec: 0 };
+}
+
+/**
+ * يعيد رمز الوصول مع تخزين مؤقت حتى قرب انتهاء الجلسة لتقليل استدعاءات getSession المتكررة مع Edge.
+ */
 export async function getAccessToken() {
+  const now = Date.now() / 1000;
+  if (accessTokenCache.token && now < accessTokenCache.untilSec - 45) {
+    return accessTokenCache.token;
+  }
   const sb = getSupabase();
   const { data } = await sb.auth.getSession();
-  return data.session?.access_token ?? null;
+  const token = data.session?.access_token ?? null;
+  const exp = data.session?.expires_at;
+  accessTokenCache = {
+    token,
+    untilSec: typeof exp === "number" ? exp : now + 300,
+  };
+  return token;
 }

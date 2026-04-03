@@ -13,5 +13,7 @@ export function mount(container, transactionId) {
     navigate,
     onDeleteExpense: (id) => state.removeExpense(id),
     onDeleteTransaction: (id) => state.removeTransaction(id),
+    onPatchTransaction: (id, patch) => state.patchTransaction(id, patch),
+    onPatchExpense: (id, patch) => state.patchExpense(id, patch),
   });
 }

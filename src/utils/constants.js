@@ -109,6 +109,18 @@ export const EX_CATEGORIES = [
   { id: "general", label: "عام", emoji: "" },
 ];
 
+/** أقصى صفوف تُجلب للحالة (لوحة التحكم، القوائم، ربط المصروف بالحوالة) — مواءمة مع حد Edge الافتراضي */
+export const MAX_FETCH_TX_EX = 500;
+
+/** حجم دفعة العرض في صفحات القوائم فقط (يقلل عقد DOM دون تقطيع البيانات في الذاكرة) */
+export const LIST_VIEW_PAGE_STEP = 60;
+
+/** حقول القائمة للاستعلام المباشر (PostgREST) — أخف من select(*) قليلاً ويوضح العقد */
+export const TRANSACTION_ROW_FIELDS =
+  "id,user_id,sender,beneficiary,amount,transaction_date,category,currency,created_at,updated_at";
+export const EXPENSE_ROW_FIELDS =
+  "id,user_id,transaction_id,description,amount,expense_date,category,currency,created_at,updated_at";
+
 /** Widgets in the draggable grid (quick + pulse stay fixed above). */
 export const DASHBOARD_WIDGETS = ["spiral", "timeline"];
 

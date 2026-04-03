@@ -1,6 +1,11 @@
 import { edgeFetch } from "./apiClient.js";
 import { getSupabase } from "./supabaseClient.js";
-import { EDGE_FUNCTION_SLUGS, getConfig } from "../utils/constants.js";
+import {
+  EDGE_FUNCTION_SLUGS,
+  getConfig,
+  MAX_FETCH_TX_EX,
+  EXPENSE_ROW_FIELDS,
+} from "../utils/constants.js";
 
 function useEdge() {
   return getConfig().useEdgeFunctions;
@@ -10,7 +15,11 @@ function useEdge() {
  * @param {string} [transactionId] تصفية اختيارية بالحوالة (نفس منطق Edge)
  */
 export async function fetchExpenses(transactionId) {
-  const q = transactionId ? `?transaction_id=${encodeURIComponent(transactionId)}` : "";
+  const params = new URLSearchParams();
+  params.set("limit", String(MAX_FETCH_TX_EX));
+  params.set("offset", "0");
+  if (transactionId) params.set("transaction_id", transactionId);
+  const q = `?${params.toString()}`;
   if (useEdge()) {
     const body = await edgeFetch(EDGE_FUNCTION_SLUGS.EXPENSES, q, { method: "GET" });
     return body.data ?? [];
@@ -18,10 +27,10 @@ export async function fetchExpenses(transactionId) {
   const sb = getSupabase();
   let query = sb
     .from("expenses")
-    .select("*")
+    .select(EXPENSE_ROW_FIELDS)
     .order("expense_date", { ascending: false })
     .order("created_at", { ascending: false })
-    .limit(500);
+    .range(0, MAX_FETCH_TX_EX - 1);
   if (transactionId) query = query.eq("transaction_id", transactionId);
   const { data, error } = await query;
   if (error) throw error;
