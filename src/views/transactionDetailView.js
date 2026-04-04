@@ -10,6 +10,8 @@ import { downloadTransferExcel, openTransferPrintPdf } from "../utils/exportTran
 import { fieldHTML, getFormData, showFormMessage } from "../components/form.js";
 import { validateTransaction, validateExpense } from "../utils/validators.js";
 import { createModalShell } from "../components/modal.js";
+import { confirmDialog } from "../components/confirmDialog.js";
+import { iconPencil, iconTrash, btnIconEdit, btnIconDelete } from "../components/icons.js";
 
 function txEmoji(cat) {
   return TX_CATEGORIES.find((c) => c.id === cat)?.emoji ?? "✨";
@@ -124,7 +126,7 @@ function openEditTransactionModal(transactionId, api) {
       </label>
       <button type="submit" class="w-full rounded-xl bg-gradient-to-r from-cyan-500 to-cyan-600 py-3 text-sm font-bold text-zinc-950 shadow-lg shadow-cyan-500/25 hover:brightness-110">
         حفظ التعديلات
-      </button>
+      </button> 
     </form>
   `;
 
@@ -356,29 +358,29 @@ export function mountTransactionDetail(root, transactionId, api) {
           </div>
         </div>
       </div>
-      <div class="mt-6 flex flex-wrap gap-2 border-t border-white/10 pt-6">
-        <button type="button" data-edit-tx class="rounded-xl border border-cyan-400/40 bg-cyan-500/10 px-4 py-2.5 text-sm font-semibold text-cyan-100 hover:bg-cyan-500/20">
-          تعديل الحوالة
+      <div class="mt-6 flex flex-wrap gap-2 border-t border-white/[0.08] pt-6">
+        <button type="button" data-edit-tx class="inline-flex items-center gap-2 rounded-xl border border-sky-400/30 bg-sky-500/[0.1] px-4 py-2.5 text-sm font-medium text-sky-100/95 transition hover:border-sky-400/45 hover:bg-sky-500/[0.16]">
+          ${iconPencil}<span>تعديل الحوالة</span>
         </button>
-        <button type="button" data-add-ex class="rounded-xl bg-violet-500 px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-violet-500/20 hover:bg-violet-400">
-          + إضافة مصروف لهذه الحوالة
+        <button type="button" data-add-ex class="rounded-xl bg-violet-600/88 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-violet-900/30 transition hover:bg-violet-500/90">
+          + إضافة مصروف
         </button>
-        <button type="button" data-del-tx class="rounded-xl border border-rose-400/40 px-4 py-2.5 text-sm text-rose-200 hover:bg-rose-500/15">
-          حذف الحوالة
+        <button type="button" data-del-tx class="inline-flex items-center gap-2 rounded-xl border border-rose-400/30 bg-rose-500/[0.1] px-4 py-2.5 text-sm font-medium text-rose-100/90 transition hover:border-rose-400/45 hover:bg-rose-500/[0.16]">
+          ${iconTrash}<span>حذف الحوالة</span>
         </button>
       </div>
     `;
 
     elEx.innerHTML = `
-      <h2 class="mb-3 text-sm font-bold uppercase tracking-widest text-white/40">المصروفات المرتبطة (${linked.length})</h2>
-      <div class="overflow-x-auto rounded-2xl border border-white/10 bg-white/[0.02]">
+      <h2 class="mb-3 text-[11px] font-bold uppercase tracking-wider text-white/42">المصروفات المرتبطة (${linked.length})</h2>
+      <div class="overflow-x-auto rounded-2xl border border-white/[0.08] bg-white/[0.025] shadow-sm ring-1 ring-white/[0.04]">
         <table class="min-w-full text-right text-sm">
-          <thead class="border-b border-white/10 text-xs uppercase text-white/40">
+          <thead class="border-b border-white/[0.08] bg-white/[0.04] text-[11px] font-semibold uppercase tracking-wider text-white/45">
             <tr>
-              <th class="px-4 py-3">الوصف</th>
-              <th class="px-4 py-3">المبلغ</th>
-              <th class="px-4 py-3">التاريخ</th>
-              <th class="px-4 py-3"></th>
+              <th class="px-4 py-3.5 font-medium">الوصف</th>
+              <th class="px-4 py-3.5 font-medium">المبلغ</th>
+              <th class="px-4 py-3.5 font-medium">التاريخ</th>
+              <th class="w-[1%] px-3 py-3.5 text-center font-medium text-white/40">إجراءات</th>
             </tr>
           </thead>
           <tbody data-ex-tbody></tbody>
@@ -391,23 +393,33 @@ export function mountTransactionDetail(root, transactionId, api) {
       ? linked
           .map(
             (e) => `
-      <tr class="border-b border-white/5 transition hover:bg-white/[0.04]">
-        <td class="px-4 py-3 text-white/90">${escapeHtml(e.description)}</td>
-        <td class="px-4 py-3 font-mono text-violet-200">${formatCurrency(Number(e.amount), cur)}</td>
-        <td class="px-4 py-3 text-white/45">${formatDate(e.expense_date)}</td>
-        <td class="px-4 py-3 text-end whitespace-nowrap">
-          <button type="button" data-edit-ex="${e.id}" class="me-1 rounded-lg px-2 py-1 text-xs text-cyan-200 hover:bg-cyan-500/10">تعديل</button>
-          <button type="button" data-del-ex="${e.id}" class="rounded-lg px-2 py-1 text-xs text-rose-300 hover:bg-rose-500/10">حذف</button>
+      <tr class="border-b border-white/[0.06] transition-colors last:border-0 hover:bg-violet-500/[0.05]">
+        <td class="max-w-[16rem] px-4 py-3.5 align-middle text-white/88">${escapeHtml(e.description)}</td>
+        <td class="whitespace-nowrap px-4 py-3.5 align-middle font-mono text-sm text-violet-200/95">${formatCurrency(Number(e.amount), cur)}</td>
+        <td class="whitespace-nowrap px-4 py-3.5 align-middle text-white/48">${formatDate(e.expense_date)}</td>
+        <td class="px-2 py-3 align-middle text-center">
+          <div class="inline-flex items-center justify-center gap-1" role="group" aria-label="إجراءات">
+            <button type="button" data-edit-ex="${e.id}" class="${btnIconEdit}" title="تعديل" aria-label="تعديل المصروف">${iconPencil}</button>
+            <button type="button" data-del-ex="${e.id}" class="${btnIconDelete}" title="حذف" aria-label="حذف المصروف">${iconTrash}</button>
+          </div>
         </td>
       </tr>`,
           )
           .join("")
-      : `<tr><td colspan="4" class="px-4 py-8 text-center text-white/35">لا توجد مصروفات بعد — أضف مصروفاً</td></tr>`;
+      : `<tr><td colspan="4" class="px-4 py-10 text-center text-sm text-white/38">لا توجد مصروفات بعد — أضف مصروفاً</td></tr>`;
 
     tbody.querySelectorAll("[data-del-ex]").forEach((btn) => {
       btn.addEventListener("click", async () => {
         const id = btn.getAttribute("data-del-ex");
-        if (!id || !confirm("حذف المصروف؟")) return;
+        if (!id) return;
+        const ok = await confirmDialog({
+          title: "حذف المصروف؟",
+          message: "هل أنت متأكد من حذف هذا المصروف؟ لا يمكن التراجع.",
+          confirmLabel: "حذف نهائياً",
+          cancelLabel: "إلغاء",
+          danger: true,
+        });
+        if (!ok) return;
         await api.onDeleteExpense(id);
       });
     });
@@ -427,7 +439,14 @@ export function mountTransactionDetail(root, transactionId, api) {
       api.navigate(`${ROUTES.ADD_EXPENSE}?transaction_id=${transactionId}`);
     });
     elMain.querySelector("[data-del-tx]")?.addEventListener("click", async () => {
-      if (!confirm("حذف الحوالة وجميع مصروفاتها المرتبطة؟")) return;
+      const ok = await confirmDialog({
+        title: "حذف الحوالة؟",
+        message: "سيتم حذف الحوالة وجميع المصروفات المرتبطة بها. لا يمكن التراجع عن هذا الإجراء.",
+        confirmLabel: "حذف نهائياً",
+        cancelLabel: "إلغاء",
+        danger: true,
+      });
+      if (!ok) return;
       await api.onDeleteTransaction(transactionId);
       api.navigate(ROUTES.TRANSACTIONS);
     });
