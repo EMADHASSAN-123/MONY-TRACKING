@@ -69,6 +69,7 @@ export function formatCurrency(value, currency = "SAR") {
       style: "currency",
       currency,
       useGrouping: true,
+      minimumFractionDigits: 0,
       maximumFractionDigits: 20, // لا نقطع الدقة
     }).format(v);
   } catch {
