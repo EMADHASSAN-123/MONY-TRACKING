@@ -1,33 +1,128 @@
 /**
  * @param {number} n
  * @param {string} [currency] رمز ISO (SAR / YER / AED)
+//  */
+// export function formatCurrency(n, currency = "SAR") {
+//   const v = Number(n);
+//   if (Number.isNaN(v)) return "—";
+//   try {
+//     return new Intl.NumberFormat("ar-SA", {
+//       style: "currency",
+//       currency,
+//       maximumFractionDigits: 2,
+//     }).format(v);
+//   } catch {
+//     return `${v.toFixed(2)} ${currency}`;
+//   }
+// }
+
+// /**
+//  * @param {number} n
+//  * @param {string} [currency]
+//  * @param {string} [shortSuffix] مثل ر.س من constants.currencyShortLabel
+//  */
+// export function formatMoneyShort(n, currency = "SAR", shortSuffix) {
+//   const v = Number(n);
+//   if (Number.isNaN(v)) return "—";
+//   const suf = shortSuffix ? ` ${shortSuffix}` : "";
+//   return `${new Intl.NumberFormat("ar-SA", { maximumFractionDigits: 2 }).format(v)}${suf}`;
+// }
+
+/**
+ * تحويل آمن للقيمة بدون كسر الدقة قدر الإمكان
+ * يقبل number أو string
  */
-export function formatCurrency(n, currency = "SAR") {
-  const v = Number(n);
+function toSafeNumber(value) {
+  if (value === null || value === undefined) return NaN;
+
+  // لو String نخليه كما هو
+  if (typeof value === "string") {
+    const v = Number(value);
+    return Number.isNaN(v) ? NaN : v;
+  }
+
+  return Number(value);
+}
+
+/**
+ * تنسيق رقم عادي (بدون عملة)
+ */
+export function formatNumber(value) {
+  const v = toSafeNumber(value);
   if (Number.isNaN(v)) return "—";
+
+  return new Intl.NumberFormat("en-US", {
+    useGrouping: true,
+    maximumFractionDigits: 20, // بدون فقدان دقة
+  }).format(v);
+}
+
+/**
+ * تنسيق عملة (احترافي)
+ */
+export function formatCurrency(value, currency = "SAR") {
+  const v = toSafeNumber(value);
+  if (Number.isNaN(v)) return "—";
+
   try {
-    return new Intl.NumberFormat("ar-SA", {
+    return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency,
-      maximumFractionDigits: 2,
+      useGrouping: true,
+      maximumFractionDigits: 20, // لا نقطع الدقة
     }).format(v);
   } catch {
-    return `${v.toFixed(2)} ${currency}`;
+    // fallback بسيط
+    return `${formatNumber(v)} ${currency}`;
   }
 }
 
 /**
- * @param {number} n
- * @param {string} [currency]
- * @param {string} [shortSuffix] مثل ر.س من constants.currencyShortLabel
+ * تنسيق مختصر (مع suffix مثل K / M)
  */
-export function formatMoneyShort(n, currency = "SAR", shortSuffix) {
-  const v = Number(n);
+export function formatMoneyShort(value, shortSuffix = "") {
+  const v = toSafeNumber(value);
   if (Number.isNaN(v)) return "—";
-  const suf = shortSuffix ? ` ${shortSuffix}` : "";
-  return `${new Intl.NumberFormat("ar-SA", { maximumFractionDigits: 2 }).format(v)}${suf}`;
+
+  const suffix = shortSuffix ? ` ${shortSuffix}` : "";
+
+  return `${new Intl.NumberFormat("en-US", {
+    useGrouping: true,
+    maximumFractionDigits: 20,
+  }).format(v)}${suffix}`;
 }
 
+/**
+ * تحويل تلقائي إلى K / M / B (اختياري)
+ */
+export function formatCompact(value) {
+  const v = toSafeNumber(value);
+  if (Number.isNaN(v)) return "—";
+
+  const abs = Math.abs(v);
+
+  if (abs >= 1_000_000_000) {
+    return formatMoneyShort(v / 1_000_000_000, "B");
+  }
+  if (abs >= 1_000_000) {
+    return formatMoneyShort(v / 1_000_000, "M");
+  }
+  if (abs >= 1_000) {
+    return formatMoneyShort(v / 1_000, "K");
+  }
+
+  return formatNumber(v);
+}
+
+/**
+ * لو عندك القيم مخزنة كـ integer (مثل هللات)
+ */
+export function formatFromMinor(value, currency = "SAR", factor = 100) {
+  const v = toSafeNumber(value);
+  if (Number.isNaN(v)) return "—";
+
+  return formatCurrency(v / factor, currency);
+}
 /**
  * @param {string|Date} d
  */
